@@ -185,8 +185,8 @@ class ChefAPI(object):
         del api_stack_value()[-1]
 
     def _request(self, method, url, data, headers):
-        request = requests.api.request(method, url, headers=headers, data=data, verify=self.ssl_verify)
-        return request
+        response = requests.api.request(method, url, headers=headers, data=data, verify=self.ssl_verify)
+        return response
 
     def request(self, method, path, headers={}, data=None):
         auth_headers = sign_request(key=self.key, http_method=method,
@@ -201,6 +201,7 @@ class ChefAPI(object):
         try:
             response = self._request(method, self.url + path, data, dict(
                 (k.capitalize(), v) for k, v in six.iteritems(request_headers)))
+            response.raise_for_status()
         except six.moves.urllib.error.HTTPError as e:
             e.content = e.read()
             try:
