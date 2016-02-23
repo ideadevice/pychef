@@ -23,3 +23,8 @@ Further Reading
 ---------------
 
 For more information check out http://pychef.readthedocs.org/en/latest/index.html
+
+Note
+-----
+
+This is a fork of https://github.com/coderanger/pychef
