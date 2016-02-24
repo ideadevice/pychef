@@ -25,11 +25,11 @@ class mockSearch(object):
             return mock.patch('chef.search.Search', side_effect=self._search_inst)(fn)(inner_self)
         return wrapper
 
-    def _search_inst(self, index, q='*:*', *args, **kwargs):
-        data = self.search_data[index, q]
+    def _search_inst(self, index, api, q='*:*', *args, **kwargs):
+        data = self.search_data[(index, q)]
         if not isinstance(data, dict):
             data = {'total': len(data), 'rows': data}
-        search = Search(index, q, *args, **kwargs)
+        search = Search(index, api, q, *args, **kwargs)
         search._data = data
         return search
 
@@ -44,7 +44,6 @@ class ChefTestCase(TestCase):
     def setUp(self):
         super(ChefTestCase, self).setUp()
         self.api = test_chef_api()
-        self.api.set_default()
         self.objects = []
 
     def tearDown(self):

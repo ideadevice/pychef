@@ -102,7 +102,7 @@ class NodeAttributeTestCase(TestCase):
 class NodeTestCase(ChefTestCase):
     def setUp(self):
         super(NodeTestCase, self).setUp()
-        self.node = Node('test_1')
+        self.node = Node('test_1', self.api)
 
     def test_default_attr(self):
         self.assertEqual(self.node.default['test_attr'], 'default')
@@ -121,16 +121,16 @@ class NodeTestCase(ChefTestCase):
 
     def test_create(self):
         name = self.random()
-        node = Node.create(name, run_list=['recipe[foo]'])
+        node = Node.create(name, self.api, run_list=['recipe[foo]'])
         self.register(node)
         self.assertEqual(node.run_list, ['recipe[foo]'])
 
-        node2 = Node(name)
+        node2 = Node(name, self.api)
         self.assertTrue(node2.exists)
         self.assertEqual(node2.run_list, ['recipe[foo]'])
 
     def test_create_crosslink(self):
-        node = Node.create(self.random())
+        node = Node.create(self.random(), self.api)
         self.register(node)
         node.normal['foo'] = 'bar'
         self.assertEqual(node['foo'], 'bar')

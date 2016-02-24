@@ -1,5 +1,6 @@
 from chef.base import ChefObject
 
+
 class Role(ChefObject):
     """A Chef role object."""
 

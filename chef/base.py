@@ -3,8 +3,8 @@ import collections
 
 import pkg_resources
 
-from chef.api import ChefAPI
 from chef.exceptions import *
+
 
 class ChefQuery(collections.Mapping):
     def __init__(self, obj_class, names, api):
@@ -23,7 +23,7 @@ class ChefQuery(collections.Mapping):
 
     def __getitem__(self, name):
         if name not in self:
-            raise KeyError('%s not found'%name)
+            raise KeyError('%s not found' % name)
         return self.obj_class(name, api=self.api)
 
 
@@ -44,9 +44,9 @@ class ChefObject(six.with_metaclass(ChefObjectMeta, object)):
 
     api_version = '0.9'
 
-    def __init__(self, name, api=None, skip_load=False):
+    def __init__(self, name, api, skip_load=False):
         self.name = name
-        self.api = api or ChefAPI.get_global()
+        self.api = api
         self._check_api_version(self.api)
 
         self.url = self.__class__.url + '/' + self.name
@@ -70,27 +70,27 @@ class ChefObject(six.with_metaclass(ChefObjectMeta, object)):
             setattr(self, name, value)
 
     @classmethod
-    def from_search(cls, data, api=None):
-        obj = cls(data.get('name'), api=api, skip_load=True)
+    def from_search(cls, data, api):
+        obj = cls(data.get('name'), api, skip_load=True)
         obj.exists = True
         obj._populate(data)
         return obj
 
     @classmethod
-    def list(cls, api=None):
+    def list(cls, api):
         """Return a :class:`ChefQuery` with the available objects of this type.
         """
-        api = api or ChefAPI.get_global()
+        api = api
         cls._check_api_version(api)
         names = [name for name, url in six.iteritems(api[cls.url])]
         return ChefQuery(cls, names, api)
 
     @classmethod
-    def create(cls, name, api=None, **kwargs):
+    def create(cls, name, api, **kwargs):
         """Create a new object of this type. Pass the initial value for any
         attributes as keyword arguments.
         """
-        api = api or ChefAPI.get_global()
+        api = api
         cls._check_api_version(api)
         obj = cls(name, api, skip_load=True)
         for key, value in six.iteritems(kwargs):
@@ -98,11 +98,11 @@ class ChefObject(six.with_metaclass(ChefObjectMeta, object)):
         api.api_request('POST', cls.url, data=obj)
         return obj
 
-    def save(self, api=None):
+    def save(self):
         """Save this object to the server. If the object does not exist it
         will be created.
         """
-        api = api or self.api
+        api = self.api
         try:
             api.api_request('PUT', self.url, data=self)
         except ChefServerNotFoundError as e:
@@ -110,9 +110,9 @@ class ChefObject(six.with_metaclass(ChefObjectMeta, object)):
             # This mirrors the logic in the Chef code
             api.api_request('POST', self.__class__.url, data=self)
 
-    def delete(self, api=None):
+    def delete(self):
         """Delete this object from the server."""
-        api = api or self.api
+        api = self.api
         api.api_request('DELETE', self.url)
 
     def to_dict(self):
@@ -129,7 +129,7 @@ class ChefObject(six.with_metaclass(ChefObjectMeta, object)):
         return self.name
 
     def __repr__(self):
-        return '<%s %s>'%(type(self).__name__, self)
+        return '<%s %s>' % (type(self).__name__, self)
 
     @classmethod
     def _check_api_version(cls, api):

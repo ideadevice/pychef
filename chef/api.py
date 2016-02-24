@@ -4,8 +4,6 @@ import os
 import re
 import socket
 import subprocess
-import threading
-import weakref
 import six
 
 import pkg_resources
@@ -18,7 +16,7 @@ from chef.rsa import Key
 from chef.utils import json
 from chef.utils.file import walk_backwards
 
-api_stack = threading.local()
+
 log = logging.getLogger('chef.api')
 
 config_ruby_script = """
@@ -26,11 +24,6 @@ require 'chef'
 Chef::Config.from_file('%s')
 puts Chef::Config.configuration.to_json
 """.strip()
-
-def api_stack_value():
-    if not hasattr(api_stack, 'value'):
-        api_stack.value = []
-    return api_stack.value
 
 
 class UnknownRubyExpression(Exception):
@@ -70,8 +63,12 @@ class ChefAPI(object):
         self.version_parsed = pkg_resources.parse_version(self.version)
         self.platform = self.parsed_url.hostname == 'api.opscode.com'
         self.ssl_verify = ssl_verify
-        if not api_stack_value():
-            self.set_default()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, tb):
+        pass
 
     @classmethod
     def from_config_file(cls, path):
@@ -87,10 +84,10 @@ class ChefAPI(object):
         ssl_verify = True
         for line in open(path):
             if not line.strip() or line.startswith('#'):
-                continue # Skip blanks and comments
+                continue  # Skip blanks and comments
             parts = line.split(None, 1)
             if len(parts) != 2:
-                continue # Not a simple key/value, we can't parse it anyway
+                continue  # Not a simple key/value, we can't parse it anyway
             key, value = parts
             md = cls.ruby_string_re.search(value)
             if md:
@@ -103,6 +100,7 @@ class ChefAPI(object):
                 # Not a string, don't even try
                 log.debug('Value for {0} does not look like a string: {1}'.format(key, value))
                 continue
+
             def _ruby_value(match):
                 expr = match.group(1).strip()
                 if expr == 'current_dir':
@@ -160,39 +158,15 @@ class ChefAPI(object):
             client_name = socket.getfqdn()
         return cls(url, key_path, client_name, ssl_verify=ssl_verify)
 
-    @staticmethod
-    def get_global():
-        """Return the API on the top of the stack."""
-        while api_stack_value():
-            api = api_stack_value()[-1]()
-            if api is not None:
-                return api
-            del api_stack_value()[-1]
-
-    def set_default(self):
-        """Make this the default API in the stack. Returns the old default if any."""
-        old = None
-        if api_stack_value():
-            old = api_stack_value().pop(0)
-        api_stack_value().insert(0, weakref.ref(self))
-        return old
-
-    def __enter__(self):
-        api_stack_value().append(weakref.ref(self))
-        return self
-
-    def __exit__(self, type, value, traceback):
-        del api_stack_value()[-1]
-
     def _request(self, method, url, data, headers):
         response = requests.api.request(method, url, headers=headers, data=data, verify=self.ssl_verify)
         return response
 
     def request(self, method, path, headers={}, data=None):
         auth_headers = sign_request(key=self.key, http_method=method,
-            path=self.parsed_url.path+path.split('?', 1)[0], body=data,
-            host=self.parsed_url.netloc, timestamp=datetime.datetime.utcnow(),
-            user_id=self.client)
+                                    path=self.parsed_url.path+path.split('?', 1)[0], body=data,
+                                    host=self.parsed_url.netloc, timestamp=datetime.datetime.utcnow(),
+                                    user_id=self.client)
         request_headers = {}
         request_headers.update(self.headers)
         request_headers.update(dict((k.lower(), v) for k, v in six.iteritems(headers)))

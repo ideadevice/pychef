@@ -1,5 +1,6 @@
 from chef.base import ChefObject
 
+
 class Environment(ChefObject):
     """A Chef environment object.
 
@@ -7,7 +8,7 @@ class Environment(ChefObject):
     """
 
     url = '/environments'
-    
+
     api_version = '0.10'
 
     attributes = {

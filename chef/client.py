@@ -1,5 +1,5 @@
-from chef.api import ChefAPI
 from chef.base import ChefObject
+
 
 class Client(ChefObject):
     """A Chef client object."""
@@ -42,8 +42,8 @@ class Client(ChefObject):
         return d
 
     @classmethod
-    def create(cls, name, api=None, admin=False):
-        api = api or ChefAPI.get_global()
+    def create(cls, name, api, admin=False):
+        api = api
         obj = cls(name, api, skip_load=True)
         obj.admin = admin
         d = api.api_request('POST', cls.url, data=obj)
@@ -51,8 +51,8 @@ class Client(ChefObject):
         obj.public_key = d['public_key']
         return obj
 
-    def rekey(self, api=None):
-        api = api or self.api
+    def rekey(self):
+        api = self.api
         d_in = {'name': self.name, 'private_key': True}
         d_out = api.api_request('PUT', self.url, data=d_in)
         self.private_key = d_out['private_key']

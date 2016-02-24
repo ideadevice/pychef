@@ -4,6 +4,7 @@ import collections
 from chef.base import ChefObject
 from chef.exceptions import ChefError
 
+
 class NodeAttributes(collections.MutableMapping):
     """A collection of Chef :class:`~chef.Node` attributes.
 
@@ -53,7 +54,7 @@ class NodeAttributes(collections.MutableMapping):
                 # Structural mismatch
                 new_d = {}
             new_search_path.append(new_d)
-        return self.__class__(new_search_path, self.path+(key,), write=self.write)
+        return self.__class__(new_search_path, self.path + (key,), write=self.write)
 
     def __setitem__(self, key, value):
         if self.write is None:
@@ -200,7 +201,7 @@ class Node(ChefObject):
     }
 
     def has_key(self, key):
-      return self.attributes.has_dotted(key)
+        return self.attributes.has_dotted(key)
 
     def get(self, key, default=None):
         return self.attributes.get(key, default)
@@ -220,9 +221,9 @@ class Node(ChefObject):
         super(Node, self)._populate(data)
         self.attributes = NodeAttributes((data.get('automatic', {}),
                                           data.get('override', {}),
-                                          data['normal'], # Must exist, see above
+                                          data['normal'],  # Must exist, see above
                                           data.get('default', {})), write=data['normal'])
 
-    def cookbooks(self, api=None):
-        api = api or self.api
+    def cookbooks(self):
+        api = self.api
         return api[self.url + '/cookbooks']

@@ -19,18 +19,19 @@ ERR_error_string_n = _eay.ERR_error_string_n
 ERR_error_string_n.argtypes = [c_ulong, c_char_p, c_size_t]
 ERR_error_string_n.restype = None
 
+
 class SSLError(Exception):
     """An error in OpenSSL."""
 
     def __init__(self, message, *args):
-        message = message%args
+        message = message % args
         err = ERR_get_error()
         if err:
             message += ':'
         while err:
             buf = create_string_buffer(120)
             ERR_error_string_n(err, buf, 120)
-            message += '\n%s'%string_at(buf, 119)
+            message += '\n%s' % string_at(buf, 119)
             err = ERR_get_error()
         super(SSLError, self).__init__(message)
 
@@ -61,10 +62,14 @@ BIO_CTRL_RESET = 1
 BIO_CTRL_INFO = 3
 
 #define BIO_reset(b)            (int)BIO_ctrl(b,BIO_CTRL_RESET,0,NULL)
+
+
 def BIO_reset(b):
     return BIO_ctrl(b, BIO_CTRL_RESET, 0, None)
 
 ##define BIO_get_mem_data(b,pp)  BIO_ctrl(b,BIO_CTRL_INFO,0,(char *)pp)
+
+
 def BIO_get_mem_data(b, pp):
     return BIO_ctrl(b, BIO_CTRL_INFO, 0, pp)
 
@@ -72,6 +77,8 @@ def BIO_get_mem_data(b, pp):
 BIO_free = _eay.BIO_free
 BIO_free.argtypes = [c_void_p]
 BIO_free.restype = c_int
+
+
 def BIO_free_errcheck(result, func, arguments):
     if result == 0:
         raise SSLError('Unable to free BIO')
@@ -133,6 +140,7 @@ RSA_F4 = 0x10001
 # void RSA_free(RSA *rsa);
 RSA_free = _eay.RSA_free
 RSA_free.argtypes = [c_void_p]
+
 
 class Key(object):
     """An OpenSSL RSA key."""

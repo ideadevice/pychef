@@ -2,9 +2,9 @@ import six
 import abc
 import collections
 
-from chef.api import ChefAPI
 from chef.base import ChefObject, ChefQuery, ChefObjectMeta
 from chef.exceptions import ChefError, ChefServerNotFoundError
+
 
 class DataBagMeta(ChefObjectMeta, abc.ABCMeta):
     """A metaclass to allow DataBag to use multiple inheritance."""
@@ -43,9 +43,9 @@ class DataBagItem(six.with_metaclass(DataBagMeta, ChefObject, collections.Mutabl
         'raw_data': dict,
     }
 
-    def __init__(self, bag, name, api=None, skip_load=False):
+    def __init__(self, bag, name, api, skip_load=False):
         self._bag = bag
-        super(DataBagItem, self).__init__(str(bag)+'/'+name, api=api, skip_load=skip_load)
+        super(DataBagItem, self).__init__(str(bag)+'/'+name, api, skip_load=skip_load)
         self.name = name
 
     @property
@@ -91,10 +91,10 @@ class DataBagItem(six.with_metaclass(DataBagMeta, ChefObject, collections.Mutabl
         del self.raw_data[key]
 
     @classmethod
-    def create(cls, bag, name, api=None, **kwargs):
+    def create(cls, bag, name, api, **kwargs):
         """Create a new data bag item. Pass the initial value for any keys as
         keyword arguments."""
-        api = api or ChefAPI.get_global()
+        api = api
         obj = cls(bag, name, api, skip_load=True)
         for key, value in six.iteritems(kwargs):
             obj[key] = value
