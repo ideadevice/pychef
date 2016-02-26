@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='PyChef',
-    version='0.2.5-calm',
+    version='0.2.5_calm',
     packages=find_packages(),
     author='Noah Kantrowitz',
     author_email='noah@coderanger.net',
